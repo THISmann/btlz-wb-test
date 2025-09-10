@@ -9,8 +9,6 @@
         "skipLibCheck": true,
         "rootDir": "./src",
         "outDir": "./dist",
-        "moduleResolution": "NodeNext",  
-        "allowImportingTsExtensions": true, 
         "paths": {
             "#*": [
                 "./src/*",
