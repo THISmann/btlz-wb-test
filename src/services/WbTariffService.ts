@@ -14,8 +14,8 @@ export interface WbTariff {
   box_storage_liter: number;
 }
 
-const URL_MOCK = process.env.API_BASE_URL || "http://localhost:3000/api/v1";
-const URL_WB = "https://common-api.wildberries.ru/api/v1";
+const URL_MOCK = process.env.API_BASE_URL || process.env.WB_MOCK_HOST;
+const URL_WB = process.env.WB_API_HOST;
 
 export class WbTariffService {
   private client: AxiosInstance;

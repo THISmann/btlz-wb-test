@@ -33,19 +33,9 @@ export class GoogleSheetsService {
         try {
             //const credentialsPath = path.join(__dirname, "../config/api-key.json");
 
-            let credentials: any;
+            const keyPath = process.env.GCP_API_KEY_PATH!;
+            const credentials = JSON.parse(fs.readFileSync(path.resolve(keyPath), "utf-8"));
 
-            if (process.env.GCP_API_KEY) {
-                // read variable from github secret
-                credentials = JSON.parse(process.env.GCP_API_KEY);
-            } else {
-                // 🔑 in local read the api-key.json
-                const credentialsPath = path.join(__dirname, "../config/api-key.json");
-                if (!fs.existsSync(credentialsPath)) {
-                    throw new Error("❌ api-key.json file not found in local environment");
-                }
-                credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
-            }
             this.auth = new google.auth.GoogleAuth({
                 credentials,
                 scopes: ["https://www.googleapis.com/auth/spreadsheets"],

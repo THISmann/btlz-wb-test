@@ -8,7 +8,7 @@ import cron from "node-cron";
 const tariffService = new WbTariffService();
 const spreadsheetService = new SpreadsheetService(knex);
 const googleSheetsService = new GoogleSheetsService();
-const SPREADSHEET_ID = "1MOAs7_DeAUjcRPWJknSuoetuzZYdcMh8w7vKQRFNbSI";
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
 // Sync function
 async function syncTariffs(): Promise<void> {
