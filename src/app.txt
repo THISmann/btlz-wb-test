@@ -1,0 +1,142 @@
+// src/app.ts
+import knex, { migrate, seed } from "./postgres/knex.js";
+import { SpreadsheetService } from "./services/SpreadsheetService.js";
+import { GoogleSheetsService, SheetData } from "./services/PgService.js";
+import { WbTariffService } from "./services/WbTariffService.js";
+import cron from "node-cron";
+
+const tariffService = new WbTariffService();
+const spreadsheetService = new SpreadsheetService(knex);
+const googleSheetsService = new GoogleSheetsService();
+
+const SPREADSHEET_ID = "1MOAs7_DeAUjcRPWJknSuoetuzZYdcMh8w7vKQRFNbSI";
+
+try {
+  console.log("🔄 Applying database migrations...");
+  await migrate.latest();
+
+  console.log("🌱 Running seeds...");
+  await seed.run();
+
+  console.log("📦 Creating sample tariff...");
+  const newTariff: SheetData[] = await tariffService.fetchTariffs();
+  // const newTariff: SheetData = {
+  //   warehouse_name: "12 Коледино",
+  //   geo_name: "12 Центральный федеральный округ",
+  //   box_delivery_base: 4128,
+  //   box_delivery_coef_expr: 160,
+  //   box_delivery_liter: 11.2,
+  //   box_delivery_marketplace_base: 40,
+  //   box_delivery_marketplace_coef_expr: 125,
+  //   box_delivery_marketplace_liter: 11,
+  //   box_storage_base: 0.14,
+  //   box_storage_coef_expr: 115,
+  //   box_storage_liter: 0.07,
+  // };
+
+  // 1. Save to database
+  const savedTariff = await spreadsheetService.create(newTariff);
+  console.log("✅ Sample tariff created in DB:", savedTariff);
+
+  // 2. Save to Google Sheets immediately
+  await googleSheetsService.saveToGoogleSheet([newTariff], SPREADSHEET_ID);
+
+  console.log("✅ All migrations, seeds, and Google Sheets sync done.");
+
+  // 3. Setup cron job (runs every day at midnight)
+  cron.schedule("0 0 * * *", async () => {
+    console.log("⏰ Running daily Google Sheets sync...");
+
+    try {
+      // Here you could fetch latest tariffs from DB
+      const tariffs: SheetData[] = [
+        {
+          warehouse_name: "Auto Коледино",
+          geo_name: "Автомат Central",
+          box_delivery_base: 5000,
+          box_delivery_coef_expr: 180,
+          box_delivery_liter: 12,
+          box_delivery_marketplace_base: 60,
+          box_delivery_marketplace_coef_expr: 140,
+          box_delivery_marketplace_liter: 12,
+          box_storage_base: 0.2,
+          box_storage_coef_expr: 120,
+          box_storage_liter: 0.08,
+        },
+      ];
+
+      await googleSheetsService.saveToGoogleSheet(tariffs, SPREADSHEET_ID);
+
+      console.log("✅ Daily sync complete");
+    } catch (err) {
+      console.error("❌ Error during daily sync:", err);
+    }
+  });
+} catch (error) {
+  console.error("❌ Error during initialization:", error);
+  process.exit(1);
+}
+
+
+# # # your node version
+# # FROM node:20-alpine AS deps-prod
+
+# # WORKDIR /app
+
+# # COPY ./package*.json .
+
+# # RUN npm install --omit=dev
+
+# # FROM deps-prod AS build
+
+# # RUN npm install --include=dev
+
+# # # Installer les dépendances y compris tsx
+# # RUN npm install -g tsx && npm install
+
+
+# # COPY . .
+
+# # RUN npm run build
+
+# # FROM node:20-alpine AS prod
+
+# # WORKDIR /app
+
+# # COPY --from=build /app/package*.json .
+# # COPY --from=deps-prod /app/node_modules ./node_modules
+# # COPY --from=build /app/dist ./dist
+ 
+# # Étape deps (install des deps de prod)
+# FROM node:20-alpine AS deps-prod
+
+# WORKDIR /app
+# COPY ./package*.json ./
+# RUN npm install --omit=dev
+
+# # Étape build (install dev + build TS)
+# FROM node:20-alpine AS build
+
+# WORKDIR /app
+# COPY ./package*.json ./
+# RUN npm install --include=dev
+
+# # Copier le code après install (pour le cache)
+# COPY . .
+
+# # Build TS
+# RUN npm run build
+
+# # Étape finale
+# FROM node:20-alpine AS prod
+
+# WORKDIR /app
+
+# COPY --from=deps-prod /app/node_modules ./node_modules
+# COPY --from=build /app/package*.json ./
+# COPY --from=build /app/dist ./dist
+
+# # Si tu utilises tsconfig-paths
+# RUN npm install tsconfig-paths
+
+# CMD ["node", "-r", "tsconfig-paths/register", "dist/app.js"]

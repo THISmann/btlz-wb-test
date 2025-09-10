@@ -1,0 +1,86 @@
+/**
+ * @param {import("knex").Knex} knex
+ * @returns {Promise<void>}
+ */
+export async function seed(knex) {
+    await knex("spreadsheets")
+        .insert([
+            {
+                warehouse_name: "Коледино",
+                geo_name: "Центральный федеральный округ",
+                box_delivery_base: 48.0,
+                box_delivery_coef_expr: 160.0,
+                box_delivery_liter: 11.2,
+                box_delivery_marketplace_base: 40.0,
+                box_delivery_marketplace_coef_expr: 125.0,
+                box_delivery_marketplace_liter: 11.0,
+                box_storage_base: 0.14,
+                box_storage_coef_expr: 115.0,
+                box_storage_liter: 0.07,
+                created_at: knex.fn.now(),
+                updated_at: knex.fn.now(),
+            },
+            {
+                warehouse_name: "Санкт-Петербург",
+                geo_name: "Северо-Западный федеральный округ",
+                box_delivery_base: 52.0,
+                box_delivery_coef_expr: 165.0,
+                box_delivery_liter: 12.5,
+                box_delivery_marketplace_base: 42.0,
+                box_delivery_marketplace_coef_expr: 130.0,
+                box_delivery_marketplace_liter: 11.8,
+                box_storage_base: 0.15,
+                box_storage_coef_expr: 120.0,
+                box_storage_liter: 0.08,
+                created_at: knex.fn.now(),
+                updated_at: knex.fn.now(),
+            },
+            {
+                warehouse_name: "Екатеринбург",
+                geo_name: "Уральский федеральный округ",
+                box_delivery_base: 55.0,
+                box_delivery_coef_expr: 170.0,
+                box_delivery_liter: 13.0,
+                box_delivery_marketplace_base: 45.0,
+                box_delivery_marketplace_coef_expr: 135.0,
+                box_delivery_marketplace_liter: 12.5,
+                box_storage_base: 0.16,
+                box_storage_coef_expr: 125.0,
+                box_storage_liter: 0.09,
+                created_at: knex.fn.now(),
+                updated_at: knex.fn.now(),
+            },
+            {
+                warehouse_name: "Новосибирск",
+                geo_name: "Сибирский федеральный округ",
+                box_delivery_base: 58.0,
+                box_delivery_coef_expr: 175.0,
+                box_delivery_liter: 14.0,
+                box_delivery_marketplace_base: 48.0,
+                box_delivery_marketplace_coef_expr: 140.0,
+                box_delivery_marketplace_liter: 13.2,
+                box_storage_base: 0.18,
+                box_storage_coef_expr: 130.0,
+                box_storage_liter: 0.1,
+                created_at: knex.fn.now(),
+                updated_at: knex.fn.now(),
+            },
+            {
+                warehouse_name: "Ростов-на-Дону",
+                geo_name: "Южный федеральный округ",
+                box_delivery_base: 50.0,
+                box_delivery_coef_expr: 162.0,
+                box_delivery_liter: 11.8,
+                box_delivery_marketplace_base: 41.0,
+                box_delivery_marketplace_coef_expr: 128.0,
+                box_delivery_marketplace_liter: 11.5,
+                box_storage_base: 0.15,
+                box_storage_coef_expr: 118.0,
+                box_storage_liter: 0.08,
+                created_at: knex.fn.now(),
+                updated_at: knex.fn.now(),
+            },
+        ])
+        .onConflict(["spreadsheet_id"])
+        .ignore();
+}
