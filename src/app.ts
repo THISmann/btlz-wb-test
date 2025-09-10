@@ -2,7 +2,7 @@
 import knex, { migrate, seed } from "./postgres/knex.js";
 import { SpreadsheetService } from "./services/pgService";
 import { GoogleSheetsService, SheetData } from "./services/googlesheetService";
-import { WbTariffService } from "./services/WbTariffService.js";
+import { WbTariffService } from "./services/WbTariffService";
 import cron from "node-cron";
 
 const tariffService = new WbTariffService();
