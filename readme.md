@@ -22,16 +22,23 @@
 
 Запуск базы данных:
 ```bash
-docker compose up -d --build postgres
+docker compose build
+```
+```bash
+docker compose up
 ```
 
 Для выполнения миграций и сидов не из контейнера:
 ```bash
-npm run knex:dev migrate latest
+npm run install
 ```
 
 ```bash
-npm run knex:dev seed run
+npm run mock
+```
+
+```bash
+npm run dev
 ```
 Также можно использовать и остальные команды (`migrate make <name>`,`migrate up`, `migrate down` и т.д.)
 
