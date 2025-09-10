@@ -1,114 +1,119 @@
-// src/services/pgService.ts
-import { google, sheets_v4 } from "googleapis";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+// src/services/SpreadsheetService.ts
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { Knex } from 'knex';
+import { Spreadsheet } from '../models/SpreadsheetModel.js';
 
-export interface SheetData {
-  warehouse_name: string;
-  geo_name: string;
-  box_delivery_base: number;
-  box_delivery_coef_expr: number;
-  box_delivery_liter: number;
-  box_delivery_marketplace_base: number;
-  box_delivery_marketplace_coef_expr: number;
-  box_delivery_marketplace_liter: number;
-  box_storage_base: number;
-  box_storage_coef_expr: number;
-  box_storage_liter: number;
-}
+/**
+ * Data required to create a new spreadsheet.
+ */
+export type CreateSpreadsheetInput = Omit<Spreadsheet, 'spreadsheet_id' | 'created_at' | 'updated_at'>;
 
-export class GoogleSheetsService {
-  private auth!: any;
-  private sheets!: sheets_v4.Sheets;
+/**
+ * Service to manage CRUD operations on WB tariffs (spreadsheets)
+ */
+export class SpreadsheetService {
+  private readonly knex: Knex;
 
-  constructor() {
-    this.initializeAuth();
+  constructor(knexInstance: Knex) {
+    this.knex = knexInstance;
   }
 
-  private initializeAuth(): void {
-    try {
-      const credentialsPath = path.join(__dirname, "../config/api-key.json");
+  /**
+   * Create a new tariff.
+   * @param data - tariff Data .
+   * @returns The created entry, with ID and timestamps
+   */
+  async create(data: CreateSpreadsheetInput): Promise<Spreadsheet> {
+    const now = new Date();
+    const [created] = await this.knex<Spreadsheet>('spreadsheets')
+      .insert({
+        ...data,
+        created_at: now,
+        updated_at: now,
+      })
+      .returning('*');
 
-      if (!fs.existsSync(credentialsPath)) {
-        throw new Error("❌  api-key.json file not found");
-      }
-
-      const credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
-
-      this.auth = new google.auth.GoogleAuth({
-        credentials,
-        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-      });
-
-      this.sheets = google.sheets({ version: "v4", auth: this.auth });
-    } catch (error: any) {
-      console.error("❌ Initialization error:", error.message);
-      process.exit(1);
+    if (!created) {
+      throw new Error('Failed to create tariff');
     }
+
+    return created;
   }
 
-async saveToGoogleSheet(
-  data: SheetData[],
-  spreadsheetId: string
-): Promise<sheets_v4.Schema$AppendValuesResponse | undefined> {
-  try {
-    // Prepare the values
-    const values = data.map((item) => [
-      item.warehouse_name || "",
-      item.geo_name || "",
-      item.box_delivery_base || "",
-      item.box_delivery_coef_expr || "",
-      item.box_delivery_liter || "",
-      item.box_delivery_marketplace_base || "",
-      item.box_delivery_marketplace_coef_expr || "",
-      item.box_delivery_marketplace_liter || "",
-      item.box_storage_base || "",
-      item.box_storage_coef_expr || "",
-      item.box_storage_liter || "",
-    ]);
+  /** Create multiple spreadsheet rows in batch */
+  async createMany(data: CreateSpreadsheetInput[]): Promise<Spreadsheet[]> {
+    if (!data.length) return [];
 
-    // 1️⃣ Get the first sheet's name dynamically
-    const spreadsheetMeta = await this.sheets.spreadsheets.get({ spreadsheetId });
-    const firstSheetTitle = spreadsheetMeta.data.sheets?.[0]?.properties?.title;
+    const now = new Date();
+    const rowsToInsert = data.map((item) => ({
+      ...item,
+      created_at: now,
+      updated_at: now,
+    }));
 
-    if (!firstSheetTitle) {
-      throw new Error("❌ Unable to find a sheet in this spreadsheet");
+    const createdRows = await this.knex<Spreadsheet>("spreadsheets")
+      .insert(rowsToInsert)
+      .returning("*"); // PostgreSQL supports returning all inserted rows
+
+    if (!createdRows || createdRows.length === 0) {
+      throw new Error("Failed to create rates in batch");
     }
 
-    // 2️⃣ Define the range automatically
-    const range = `${firstSheetTitle}!A:K`; // A → K = 11 columns
-
-    console.log(`🔄 Writing data to sheet: ${firstSheetTitle} (range: ${range})`);
-
-    // 3️⃣ Append values
-    const response = await this.sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range,
-      valueInputOption: "USER_ENTERED",
-      insertDataOption: "INSERT_ROWS",
-      requestBody: { values },
-    });
-
-    console.log("✅ Data register!");
-    console.log("📊 Updated cells:", response.data.updates?.updatedCells);
-    console.log("📈 Updated Range:", response.data.updates?.updatedRange);
-
-    return response.data;
-  } catch (error: any) {
-    console.error("❌ Error while saving:", error.message);
-
-    if (error.code === 404) {
-      console.error("📋 Permission issue - Check service account permissions");
-    } else if (error.code === 403) {
-      console.error("🔐 e");
-    }
-
-    throw error;
+    return createdRows;
   }
-}
 
+  /**
+   * Récupère un tarif par son ID.
+   * @param spreadsheet_id - ID du tarif.
+   * @returns Le tarif trouvé, ou `null` si introuvable.
+   */
+  // async findById(spreadsheet_id: number): Promise<Spreadsheet | null> {
+  //   return this.knex<Spreadsheet>('spreadsheets')
+  //     .where({ spreadsheet_id })
+  //     .first();
+  // }
+
+  /**
+   * Delete a fare by its ID.
+   * @param spreadsheet_id - ID of the tariff to be deleted.
+   * @returns `true` if deleted, `false` otherwise.
+   */
+  async delete(spreadsheet_id: number): Promise<boolean> {
+    const count = await this.knex('spreadsheets')
+      .where({ spreadsheet_id })
+      .delete();
+
+    return count > 0;
+  }
+
+  /**
+   * Retrieves all fares.
+   * @returns Array of all tariffs.
+   */
+  async findAll(): Promise<Spreadsheet[]> {
+    return this.knex<Spreadsheet>('spreadsheets')
+      .select('*')
+      .orderBy('spreadsheet_id', 'asc');
+  }
+
+  /**
+   * (Bonus) Updates an existing spreadsheet.
+   * @param spreadsheet_id - ID of the spreadsheet to update.
+   * @param data -  data to update.
+   * @returns The updated spreadsheet, or `null` if not found.
+   */
+  async update(
+    spreadsheet_id: number,
+    data: Partial<CreateSpreadsheetInput>
+  ): Promise<Spreadsheet | null> {
+    const [updated] = await this.knex<Spreadsheet>('spreadsheets')
+      .where({ spreadsheet_id })
+      .update({
+        ...data,
+        updated_at: new Date(),
+      })
+      .returning('*');
+
+    return updated || null;
+  }
 }
