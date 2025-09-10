@@ -39,7 +39,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "#*": ["./src/*"]
+      "#*": ["./src/*","./dist/*"]
     }
   },
   "include": ["src/**/*.ts","src/**/*.js",],
