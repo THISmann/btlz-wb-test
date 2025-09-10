@@ -1,7 +1,7 @@
 // src/app.ts
 import knex, { migrate, seed } from "./postgres/knex.js";
-import { SpreadsheetService } from "./services/pgService.js";
-import { GoogleSheetsService, SheetData } from "./services/googlesheetService.js";
+import { SpreadsheetService } from "./services/pgService";
+import { GoogleSheetsService, SheetData } from "./services/googlesheetService";
 import { WbTariffService } from "./services/WbTariffService.js";
 import cron from "node-cron";
 
