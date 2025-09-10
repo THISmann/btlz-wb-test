@@ -61,6 +61,8 @@ services:
       PORT: ${APP_PORT}
       NODE_ENV: production
       API_BASE_URL: http://mock:3000/api/v1
+      GCP_API_KEY_PATH: /app/dist/api-key.json
+      SPREADSHEET_ID: ${SPREADSHEET_ID}
 
     ports:
       - ${APP_PORT}:${APP_PORT}

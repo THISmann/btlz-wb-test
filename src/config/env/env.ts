@@ -35,6 +35,8 @@ const env = envSchema.parse({
     WB_MOCK_HOST: process.env.WB_MOCK_HOST,
     GCP_API_KEY: process.env.GCP_API_KEY,
     GOOGLESHEET_API: process.env.GOOGLESHEET_API,
+    GCP_API_KEY_PATH: process.env.GCP_API_KEY_PATH
+
 });
 
 export default env;

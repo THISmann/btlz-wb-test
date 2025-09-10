@@ -24,14 +24,14 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/tsconfig.json ./ 
 
 # if you key in local
-#COPY --from=build /app/src/config/api-key.json ./dist/config
+COPY --from=build /app/src/config/api-key.json ./dist
 
 # Create config directory
-RUN mkdir -p ./dist/config
+#RUN mkdir -p ./dist/config
 
 # Write secret file from build-arg
-ARG GCP_API_KEY
-RUN echo "$GCP_API_KEY" > ./dist/config/api-key.json 
+#ARG GCP_API_KEY
+#RUN echo "$GCP_API_KEY" > ./dist/config/api-key.json 
 
 RUN npm install tsconfig-paths
 
