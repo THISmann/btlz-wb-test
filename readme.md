@@ -47,6 +47,9 @@ npm run dev
 npm run dev
 ```
 
+``` 
+https://docs.google.com/spreadsheets/d/1MOAs7_DeAUjcRPWJknSuoetuzZYdcMh8w7vKQRFNbSI/edit?usp=sharing
+```
 Запуск проверки самого приложения:
 ```bash
 docker compose up -d --build app
