@@ -1,0 +1,4 @@
+db_user: user
+db_pass: password
+db_name: test_db
+

@@ -1,0 +1,56 @@
+- name: Setup PostgreSQL database
+  hosts: inno
+  become: true
+  vars_files:
+  - ../vars/postgres.yml 
+
+  tasks:
+    - name: Install PostgreSQL server and client
+      ansible.builtin.apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+        state: present
+        update_cache: yes
+
+    - name: Ensure PostgreSQL service is running
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: true
+
+    - name: Install Python dependencies for PostgreSQL
+      ansible.builtin.apt:
+        name:
+          - python3-psycopg2
+          - libpq-dev
+        state: present
+        update_cache: yes
+
+    - name: Create PostgreSQL user
+      community.postgresql.postgresql_user:
+        name: "{{ postgres_user }}"
+        password: "{{ postgres_password }}"
+        role_attr_flags: CREATEDB,LOGIN
+        state: present
+      become: yes
+      become_user: postgres
+
+    - name: Create PostgreSQL database
+      community.postgresql.postgresql_db:
+        name: "{{ postgres_db }}"
+        owner: "{{ postgres_user }}"
+        state: present
+      become: yes
+      become_user: postgres
+
+
+    - name: Grant all privileges on database to user
+      community.postgresql.postgresql_privs:
+        db: "{{ postgres_db }}"
+        role: "{{ postgres_user }}"
+        type: database
+        privs: ALL
+        state: present
+      become: yes
+      become_user: postgres

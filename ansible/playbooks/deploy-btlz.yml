@@ -1,0 +1,48 @@
+---
+- name: Deploy btlz-wb-test project
+  hosts: inno
+  become: true
+  vars:
+    project_dir: /home/inno/Documents/btlz-wb-test
+    node_version: "20"
+    env_file_src: /Users/user/Documents/btlz-wb-test/.env
+    apikey_file_src: /Users/user/Documents/btlz-wb-test/api-key.json
+
+  tasks: 
+    - name: Clone repository
+      ansible.builtin.git:
+        repo: "https://github.com/THISmann/btlz-wb-test.git"
+        dest: "{{ project_dir }}"
+        version: main
+        force: yes
+    
+    - name: Copy .env file
+      ansible.builtin.copy:
+        src: "{{ env_file_src }}"
+        dest: "{{ project_dir }}/.env"
+        owner: inno
+        group: inno
+        mode: '0644'
+
+    - name: Copy api-key file
+      ansible.builtin.copy:
+        src: "{{ apikey_file_src }}"
+        dest: "{{ project_dir }}/api-key.json"
+        owner: inno
+        group: inno
+        mode: '0644'
+
+    - name: Run npm install
+      ansible.builtin.shell: npm install
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: Run npm run mock in background
+      ansible.builtin.shell: nohup npm run mock > mock.log 2>&1 &
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: Run npm run dev in background
+      ansible.builtin.shell: nohup npm run dev > dev.log 2>&1 &
+      args:
+        chdir: "{{ project_dir }}"

@@ -1,0 +1,21 @@
+- name: Install Docker on Debian
+  hosts: inno
+  become: true
+  vars:
+    docker_release: "{{ ansible_distribution_release | default('bookworm') }}"
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - node
+        state: present
+
+    
