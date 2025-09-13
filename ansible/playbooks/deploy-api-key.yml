@@ -1,0 +1,10 @@
+- name: Deploy API key
+  hosts: inno
+  become: true 
+
+  tasks:
+    - name: Copy API key to server
+      ansible.builtin.copy:
+        src: ../secrets/api-key.json
+        dest: /home/inno/Documents/api-key.json
+        mode: '0600'
